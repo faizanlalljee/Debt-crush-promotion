@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DebtCrush — Promo Clip</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Mono:wght@400;500&family=Barlow+Condensed:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+
+:root {
+  --cream: #f2ebe0;
+  --sand:  #e8dece;
+  --ink:   #1a1008;
+  --rust:  #c4400a;
+  --gold:  #c8900a;
+  --red:   #c0281a;
+  --green: #2a6040;
+  --muted: #8a7060;
+}
+
+body {
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-family: 'Barlow Condensed', sans-serif;
+  overflow: hidden;
+}
+
+/* ── STAGE ── */
+#stage {
+  width: 900px;
+  height: 506px;
+  position: relative;
+  overflow: hidden;
+  background: var(--cream);
+  cursor: pointer;
+}
+
+/* ── SCENE SYSTEM ── */
+.scene {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0s;
+}
+.scene.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+.scene.fade-in  { animation: fadeIn 0.6s ease forwards; }
+.scene.fade-out { animation: fadeOut 0.4s ease forwards; }
+
+@keyframes fadeIn  { from{opacity:0} to{opacity:1} }
+@keyframes fadeOut { from{opacity:1} to{opacity:0} }
+@keyframes slideUp   { from{transform:translateY(40px);opacity:0} to{transform:translateY(0);opacity:1} }
+@keyframes slideLeft { from{transform:translateX(60px);opacity:0} to{transform:translateX(0);opacity:1} }
+@keyframes popIn     { from{transform:scale(0.85);opacity:0} to{transform:scale(1);opacity:1} }
+@keyframes countUp   { from{transform:translateY(12px);opacity:0} to{transform:translateY(0);opacity:1} }
+@keyframes barGrow   { from{width:0} to{width:var(--w)} }
+@keyframes debtDrop  { from{color:var(--red)} to{color:var(--green)} }
+@keyframes shake     { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(5px)} }
+@keyframes pulse     { 0%,100%{opacity:1} 50%{opacity:0.6} }
+@keyframes scanline  { 0%{transform:translateY(-100%)} 100%{transform:translateY(506px)} }
+@keyframes ticker    { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+@keyframes zoomPan   { 0%{transform:scale(1) translateX(0)} 100%{transform:scale(1.06) translateX(-20px)} }
+@keyframes glitch1   { 0%,95%{clip-path:inset(0)} 96%{clip-path:inset(10% 0 80% 0)} 97%{clip-path:inset(60% 0 10% 0)} 98%{clip-path:inset(30% 0 50% 0)} 99%{clip-path:inset(0)} }
+@keyframes numberRoll { from{transform:translateY(100%);opacity:0} to{transform:translateY(0);opacity:1} }
+@keyframes flashRed   { 0%{background:var(--cream)} 30%{background:rgba(192,40,26,0.15)} 100%{background:var(--cream)} }
+@keyframes stampIn    { 0%{transform:scale(2) rotate(-15deg);opacity:0} 60%{transform:scale(0.95) rotate(-3deg);opacity:1} 100%{transform:scale(1) rotate(-4deg);opacity:1} }
+
+/* ── SHARED UI ── */
+.tag {
+  display: inline-block;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  border: 1.5px solid var(--rust);
+  color: var(--rust);
+  padding: 4px 10px;
+  border-radius: 3px;
+}
+
+.noise {
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0.6;
+}
+
+/* scanline overlay */
+.scan-overlay {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.03) 3px, rgba(0,0,0,0.03) 4px);
+  pointer-events: none;
+  z-index: 48;
+}
+
+/* progress bar at bottom */
+#progress-bar {
+  position: absolute;
+  bottom: 0; left: 0;
+  height: 3px;
+  background: var(--rust);
+  width: 0%;
+  z-index: 100;
+  transition: width 0.1s linear;
+}
+
+/* play/replay button */
+#play-btn {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10,5,2,0.7);
+  z-index: 200;
+  cursor: pointer;
+}
+#play-btn .play-icon {
+  width: 72px;
+  height: 72px;
+  border: 3px solid var(--cream);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+  transition: transform 0.2s;
+}
+#play-btn:hover .play-icon { transform: scale(1.1); }
+#play-btn .play-icon svg { margin-left: 5px; }
+#play-btn span {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: var(--cream);
+  opacity: 0.7;
+}
+
+/* ticker tape */
+.ticker-wrap {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 32px;
+  background: var(--ink);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  z-index: 20;
+}
+.ticker-inner {
+  display: flex;
+  white-space: nowrap;
+  animation: ticker 18s linear infinite;
+}
+.ticker-item {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--cream);
+  opacity: 0.7;
+  letter-spacing: .1em;
+  padding: 0 28px;
+}
+.ticker-item span { color: var(--gold); font-weight: 500; }
+
+/* ═══════════════════════════════
+   SCENE 1 — COLD OPEN / HOOK
+═══════════════════════════════ */
+#s1 {
+  background: var(--ink);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+#s1 .debt-number {
+  font-family: 'Playfair Display', serif;
+  font-size: 110px;
+  font-weight: 900;
+  color: var(--red);
+  line-height: 1;
+  opacity: 0;
+  animation: numberRoll 0.5s 0.3s cubic-bezier(0.2,0.8,0.3,1) forwards;
+}
+#s1 .debt-label {
+  font-size: 13px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  margin-top: 8px;
+  opacity: 0;
+  animation: fadeIn 0.5s 0.8s ease forwards;
+  font-family: 'DM Mono', monospace;
+}
+#s1 .s1-sub {
+  font-size: 20px;
+  color: var(--cream);
+  opacity: 0;
+  margin-top: 24px;
+  letter-spacing: .08em;
+  font-weight: 400;
+  animation: fadeIn 0.5s 1.2s ease forwards;
+}
+#s1 .s1-sub em {
+  color: var(--gold);
+  font-style: italic;
+  font-family: 'Playfair Display', serif;
+}
+#s1 .grid-bg {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+#s1 .corner-tag {
+  position: absolute;
+  top: 24px; left: 28px;
+  opacity: 0;
+  animation: fadeIn 0.4s 0.1s ease forwards;
+}
+
+/* ═══════════════════════════════
+   SCENE 2 — GAME INTRO
+═══════════════════════════════ */
+#s2 {
+  background: var(--cream);
+}
+#s2 .left-col {
+  position: absolute;
+  left: 56px;
+  top: 0; bottom: 0;
+  width: 380px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+}
+#s2 .eyebrow {
+  opacity: 0;
+  animation: slideUp 0.5s 0.1s ease forwards;
+}
+#s2 h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 52px;
+  line-height: 1.0;
+  color: var(--ink);
+  font-weight: 900;
+  opacity: 0;
+  animation: slideUp 0.5s 0.3s ease forwards;
+}
+#s2 h1 em {
+  color: var(--rust);
+  font-style: italic;
+}
+#s2 .desc {
+  font-size: 15px;
+  color: var(--muted);
+  line-height: 1.55;
+  font-weight: 400;
+  font-family: 'Barlow Condensed', sans-serif;
+  max-width: 320px;
+  opacity: 0;
+  animation: slideUp 0.5s 0.6s ease forwards;
+}
+#s2 .desc strong { color: var(--ink); }
+#s2 .stats-row {
+  display: flex;
+  gap: 28px;
+  margin-top: 8px;
+  opacity: 0;
+  animation: slideUp 0.5s 0.9s ease forwards;
+}
+#s2 .stat-item .sv {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--rust);
+  line-height: 1;
+}
+#s2 .stat-item .sl {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .1em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+/* phone mockup */
+#s2 .phone {
+  position: absolute;
+  right: 40px;
+  top: 50%;
+  transform: translateY(-50%) translateX(80px);
+  width: 240px;
+  opacity: 0;
+  animation: slideLeft 0.6s 0.5s cubic-bezier(0.2,0.8,0.3,1) forwards;
+}
+#s2 .phone-body {
+  background: white;
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.1);
+  border: 1.5px solid rgba(0,0,0,0.08);
+}
+#s2 .phone-notch {
+  background: var(--ink);
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+}
+#s2 .phone-brand {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  color: var(--cream);
+  letter-spacing: .08em;
+}
+#s2 .phone-brand span { color: var(--rust); font-weight: 500; }
+#s2 .phone-period {
+  font-family: 'DM Mono', monospace;
+  font-size: 8px;
+  color: rgba(255,255,255,0.5);
+}
+#s2 .phone-content { padding: 12px; }
+#s2 .phone-row {
+  background: #f9f8f6;
+  border: 1px solid #ede8e0;
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+}
+#s2 .phone-row .pr-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 8px;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 2px;
+}
+#s2 .phone-row .pr-val {
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--rust);
+}
+#s2 .event-card {
+  background: #fff5f3;
+  border: 1.5px solid rgba(192,40,26,.2);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  animation: shake 0.5s 1.2s ease both;
+}
+#s2 .event-card .ei { font-size: 14px; }
+#s2 .event-card .et {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink);
+  font-family: 'Barlow Condensed', sans-serif;
+}
+#s2 .event-card .ea {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--red);
+  font-family: 'DM Mono', monospace;
+  margin-left: auto;
+}
+#s2 .debt-bar-row {
+  margin-bottom: 4px;
+}
+#s2 .dbr-top {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'DM Mono', monospace;
+  font-size: 8px;
+  color: #888;
+  margin-bottom: 3px;
+}
+#s2 .dbr-track {
+  height: 5px;
+  background: #eee;
+  border-radius: 99px;
+  overflow: hidden;
+}
+#s2 .dbr-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--gold);
+  animation: barGrow 1.2s 1.5s ease forwards;
+  width: 0;
+}
+
+/* ═══════════════════════════════
+   SCENE 3 — EVENTS / CHAOS
+═══════════════════════════════ */
+#s3 {
+  background: var(--cream);
+  animation: flashRed 0.6s 0.2s ease both;
+}
+#s3 .s3-header {
+  position: absolute;
+  top: 40px; left: 56px; right: 56px;
+  opacity: 0;
+  animation: slideUp 0.5s 0.2s ease forwards;
+}
+#s3 .s3-header .eyebrow { margin-bottom: 8px; }
+#s3 .s3-header h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 36px;
+  font-weight: 900;
+  color: var(--ink);
+  line-height: 1.1;
+}
+#s3 .s3-header h2 em { color: var(--rust); font-style: italic; }
+
+#s3 .event-grid {
+  position: absolute;
+  left: 56px; right: 56px;
+  top: 160px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+.ev-card {
+  background: white;
+  border: 1.5px solid #e8e0d4;
+  border-radius: 12px;
+  padding: 14px 16px;
+  opacity: 0;
+}
+.ev-card.bad  { border-color: rgba(192,40,26,0.3); background: #fff8f7; }
+.ev-card.good { border-color: rgba(42,96,64,0.3);  background: #f4faf7; }
+.ev-card .ev-icon { font-size: 22px; margin-bottom: 6px; }
+.ev-card .ev-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 3px;
+  font-family: 'Barlow Condensed', sans-serif;
+  letter-spacing: .02em;
+}
+.ev-card .ev-impact {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+}
+.ev-card.bad  .ev-impact { color: var(--red); }
+.ev-card.good .ev-impact { color: var(--green); }
+
+.ev-card:nth-child(1) { animation: popIn 0.4s 0.4s ease forwards; }
+.ev-card:nth-child(2) { animation: popIn 0.4s 0.6s ease forwards; }
+.ev-card:nth-child(3) { animation: popIn 0.4s 0.8s ease forwards; }
+.ev-card:nth-child(4) { animation: popIn 0.4s 1.0s ease forwards; }
+.ev-card:nth-child(5) { animation: popIn 0.4s 1.2s ease forwards; }
+.ev-card:nth-child(6) { animation: popIn 0.4s 1.4s ease forwards; }
+
+/* ═══════════════════════════════
+   SCENE 4 — STRATEGY
+═══════════════════════════════ */
+#s4 { background: var(--ink); }
+#s4 .s4-bg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 70% 50%, rgba(200,144,10,0.12), transparent 60%);
+}
+#s4 .s4-left {
+  position: absolute;
+  left: 56px;
+  top: 0; bottom: 0;
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+}
+#s4 .s4-eyebrow {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: 0;
+  animation: fadeIn 0.4s 0.2s ease forwards;
+}
+#s4 h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 42px;
+  font-weight: 900;
+  color: var(--cream);
+  line-height: 1.05;
+  opacity: 0;
+  animation: slideUp 0.5s 0.4s ease forwards;
+}
+#s4 h2 em { color: var(--gold); font-style: italic; }
+#s4 .s4-desc {
+  font-size: 14px;
+  color: rgba(255,255,255,0.5);
+  line-height: 1.5;
+  opacity: 0;
+  animation: fadeIn 0.5s 0.8s ease forwards;
+  max-width: 280px;
+}
+
+#s4 .strategy-cards {
+  position: absolute;
+  right: 48px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 320px;
+}
+.strat-card {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  opacity: 0;
+}
+.strat-card.winner { border-color: rgba(200,144,10,0.4); background: rgba(200,144,10,0.08); }
+.strat-card:nth-child(1) { animation: slideLeft 0.4s 0.3s ease forwards; }
+.strat-card:nth-child(2) { animation: slideLeft 0.4s 0.5s ease forwards; }
+.strat-card:nth-child(3) { animation: slideLeft 0.4s 0.7s ease forwards; }
+.strat-card .sc-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--cream);
+  letter-spacing: .04em;
+  font-family: 'Barlow Condensed', sans-serif;
+}
+.strat-card .sc-val {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  margin-left: auto;
+}
+.strat-card.winner .sc-val { color: var(--gold); }
+.strat-card:not(.winner) .sc-val { color: rgba(255,255,255,0.4); }
+.strat-card .badge {
+  background: var(--gold);
+  color: var(--ink);
+  font-family: 'DM Mono', monospace;
+  font-size: 8px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 99px;
+  letter-spacing: .06em;
+  white-space: nowrap;
+}
+.strat-icon { font-size: 18px; }
+
+/* ═══════════════════════════════
+   SCENE 5 — DIFFICULTY
+═══════════════════════════════ */
+#s5 { background: var(--cream); }
+#s5 .s5-header {
+  position: absolute;
+  top: 36px; left: 56px;
+  opacity: 0;
+  animation: slideUp 0.4s 0.1s ease forwards;
+}
+#s5 .s5-header h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 34px;
+  font-weight: 900;
+  color: var(--ink);
+  line-height: 1.1;
+}
+#s5 .s5-header h2 em { color: var(--rust); font-style: italic; }
+#s5 .s5-header p {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 5px;
+  max-width: 400px;
+}
+
+#s5 .diff-cols {
+  position: absolute;
+  left: 56px; right: 56px;
+  top: 140px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+.diff-card {
+  border-radius: 14px;
+  padding: 18px;
+  opacity: 0;
+}
+.diff-card.easy   { background: white; border: 1.5px solid #ddd; animation: slideUp 0.4s 0.3s ease forwards; }
+.diff-card.normal { background: var(--ink); border: 1.5px solid var(--ink); animation: slideUp 0.4s 0.5s ease forwards; }
+.diff-card.hard   { background: #1a0200; border: 1.5px solid rgba(192,40,26,0.5); animation: slideUp 0.4s 0.7s ease forwards; }
+.diff-card .dc-mode {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.diff-card.easy   .dc-mode { color: var(--muted); }
+.diff-card.normal .dc-mode { color: var(--gold); }
+.diff-card.hard   .dc-mode { color: var(--red); }
+.diff-card .dc-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.diff-card.easy   .dc-name { color: var(--ink); }
+.diff-card.normal .dc-name { color: var(--cream); }
+.diff-card.hard   .dc-name { color: var(--cream); }
+.diff-card .dc-income {
+  font-family: 'DM Mono', monospace;
+  font-size: 18px;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+.diff-card.easy   .dc-income { color: var(--green); }
+.diff-card.normal .dc-income { color: var(--gold); }
+.diff-card.hard   .dc-income { color: var(--red); }
+.diff-card .dc-apr {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  opacity: 0.5;
+}
+.diff-card.easy   .dc-apr { color: var(--ink); }
+.diff-card.normal .dc-apr { color: var(--cream); }
+.diff-card.hard   .dc-apr { color: var(--cream); }
+.diff-card .dc-features {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.diff-card .dcf {
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 400;
+}
+.diff-card.easy   .dcf { color: var(--muted); }
+.diff-card.normal .dcf { color: rgba(255,255,255,0.6); }
+.diff-card.hard   .dcf { color: rgba(255,255,255,0.5); }
+.dcf .dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.diff-card.easy   .dcf .dot { background: var(--green); }
+.diff-card.normal .dcf .dot { background: var(--gold); }
+.diff-card.hard   .dcf .dot { background: var(--red); }
+.most-real {
+  position: absolute;
+  top: -1px; right: 14px;
+  background: var(--gold);
+  color: var(--ink);
+  font-family: 'DM Mono', monospace;
+  font-size: 8px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 0 0 6px 6px;
+  letter-spacing: .06em;
+}
+
+/* ═══════════════════════════════
+   SCENE 6 — DEBT METER
+═══════════════════════════════ */
+#s6 { background: var(--cream); }
+#s6 .s6-bg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 100%, rgba(192,40,26,0.06), transparent 60%);
+}
+#s6 .s6-header {
+  position: absolute;
+  top: 40px; left: 0; right: 0;
+  text-align: center;
+  opacity: 0;
+  animation: slideUp 0.5s 0.2s ease forwards;
+}
+#s6 .s6-header .eyebrow-c {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .2em;
+  color: var(--rust);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+#s6 .s6-header h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 38px;
+  font-weight: 900;
+  color: var(--ink);
+  line-height: 1.1;
+}
+#s6 .s6-header p {
+  font-size: 14px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+#s6 .debt-meter-box {
+  position: absolute;
+  left: 50%;
+  top: 200px;
+  transform: translateX(-50%);
+  width: 520px;
+  background: white;
+  border: 1.5px solid #e0d8cc;
+  border-radius: 16px;
+  padding: 20px 24px 24px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+  opacity: 0;
+  animation: popIn 0.5s 0.6s ease forwards;
+}
+#s6 .dmb-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+#s6 .dmb-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #999;
+  margin-bottom: 4px;
+}
+#s6 .dmb-amount {
+  font-family: 'Playfair Display', serif;
+  font-size: 42px;
+  font-weight: 900;
+  color: var(--red);
+  line-height: 1;
+}
+#s6 .dmb-month {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+/* animated debt bar */
+#s6 .debt-viz {
+  position: relative;
+  height: 56px;
+  margin-top: 8px;
+}
+#s6 .dv-track {
+  height: 18px;
+  background: #f0ebe4;
+  border-radius: 99px;
+  overflow: visible;
+  position: relative;
+  margin-top: 19px;
+}
+#s6 .dv-remaining {
+  position: absolute;
+  top: 0; left: 0;
+  height: 100%;
+  background: linear-gradient(90deg, var(--red), #e05030);
+  border-radius: 99px;
+  width: 100%;
+  animation: barGrow 2s 1.2s cubic-bezier(0.4,0,0.2,1) both;
+  --w: 100%;
+}
+#s6 .dv-paid {
+  position: absolute;
+  top: 0; left: 0;
+  height: 100%;
+  background: linear-gradient(90deg, var(--green), #4a9a70);
+  border-radius: 99px;
+  width: 0%;
+  animation: barGrow 0.8s 3.2s ease forwards;
+  --w: 12%;
+}
+#s6 .dv-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+}
+#s6 .dv-labels .dl-left { color: var(--red); }
+#s6 .dv-labels .dl-right { color: var(--green); }
+
+#s6 .month-markers {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2px;
+  padding: 0 2px;
+}
+#s6 .mm { width: 2px; height: 6px; background: #ddd; border-radius: 99px; }
+#s6 .mm.active { background: var(--gold); }
+
+/* ═══════════════════════════════
+   SCENE 7 — CTA
+═══════════════════════════════ */
+#s7 { background: var(--ink); }
+#s7 .s7-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 80%, rgba(192,40,26,0.2), transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(200,144,10,0.15), transparent 50%);
+}
+#s7 .s7-grid {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+#s7 .center-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+#s7 .s7-kicker {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: 0;
+  animation: fadeIn 0.4s 0.2s ease forwards;
+}
+#s7 h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 64px;
+  font-weight: 900;
+  color: var(--cream);
+  line-height: 0.95;
+  text-align: center;
+  opacity: 0;
+  animation: slideUp 0.6s 0.4s cubic-bezier(0.2,0.8,0.3,1) forwards;
+}
+#s7 h2 em { color: var(--rust); font-style: italic; }
+#s7 .s7-sub {
+  font-size: 16px;
+  color: rgba(255,255,255,0.5);
+  text-align: center;
+  letter-spacing: .04em;
+  opacity: 0;
+  animation: fadeIn 0.5s 0.9s ease forwards;
+}
+#s7 .cta-pill {
+  background: var(--rust);
+  color: var(--cream);
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  padding: 13px 32px;
+  border-radius: 4px;
+  margin-top: 8px;
+  opacity: 0;
+  animation: popIn 0.4s 1.3s ease forwards;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+#s7 .cta-pill:hover { background: #d84c1a; }
+#s7 .s7-tag {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: rgba(255,255,255,0.3);
+  letter-spacing: .08em;
+  opacity: 0;
+  animation: fadeIn 0.4s 1.6s ease forwards;
+}
+
+/* stamp effect */
+#s7 .stamp {
+  position: absolute;
+  bottom: 50px;
+  right: 60px;
+  border: 3px solid var(--gold);
+  color: var(--gold);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 8px 14px;
+  border-radius: 4px;
+  opacity: 0;
+  transform: rotate(-4deg);
+  animation: stampIn 0.5s 1.8s ease forwards;
+}
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <div class="noise"></div>
+  <div class="scan-overlay"></div>
+  <div id="progress-bar"></div>
+
+  <!-- MUTE BUTTON -->
+  <div id="mute-btn" style="display:none;position:absolute;top:12px;right:14px;z-index:150;
+    background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.15);border-radius:20px;
+    padding:6px 11px;cursor:pointer;display:none;align-items:center;gap:6px;
+    font-family:'DM Mono',monospace;font-size:10px;color:rgba(242,235,224,0.7);
+    letter-spacing:.08em;text-transform:uppercase;backdrop-filter:blur(4px);">
+    <svg id="icon-sound" width="14" height="14" viewBox="0 0 24 24">
+      <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" fill="rgba(242,235,224,0.8)"/>
+    </svg>
+    <svg id="icon-muted" width="14" height="14" viewBox="0 0 24 24" style="display:none;">
+      <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z" fill="rgba(242,235,224,0.5)"/>
+    </svg>
+    <span id="mute-label">Music</span>
+  </div>
+
+  <!-- PLAY BUTTON -->
+  <div id="play-btn">
+    <div class="play-icon">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+        <polygon points="8,4 24,14 8,24" fill="#f2ebe0"/>
+      </svg>
+    </div>
+    <span>Play promo clip</span>
+  </div>
+
+  <!-- ═══ SCENE 1: COLD OPEN ═══ -->
+  <div class="scene" id="s1">
+    <div class="grid-bg"></div>
+    <div class="corner-tag">
+      <div class="tag" style="border-color:rgba(255,255,255,0.3);color:rgba(255,255,255,0.4);">Financial Simulation Game</div>
+    </div>
+    <div class="debt-number">$16,000</div>
+    <div class="debt-label">in debt · 10 months to crush it</div>
+    <div class="s1-sub">Can you survive real life? <em>Play to find out.</em></div>
+  </div>
+
+  <!-- ═══ SCENE 2: GAME INTRO ═══ -->
+  <div class="scene" id="s2">
+    <div class="left-col">
+      <div class="eyebrow"><div class="tag">DebtCrush</div></div>
+      <h1>Crush Your<br>Debt.<br><em>Survive<br>Real Life.</em></h1>
+      <p class="desc">10 months. 3 debts. Life keeps throwing curveballs. <strong>DebtCrush</strong> teaches real financial strategy through car repairs, medical bills, and unexpected windfalls.</p>
+      <div class="stats-row">
+        <div class="stat-item"><div class="sv">3</div><div class="sl">Debts</div></div>
+        <div class="stat-item"><div class="sv">10</div><div class="sl">Months</div></div>
+        <div class="stat-item"><div class="sv">15+</div><div class="sl">Events</div></div>
+        <div class="stat-item"><div class="sv">A+</div><div class="sl">Top grade</div></div>
+      </div>
+    </div>
+    <div class="phone">
+      <div class="phone-body">
+        <div class="phone-notch">
+          <div class="phone-brand">DEBT<span>CRUSH</span></div>
+          <div class="phone-period">Month 4 / 10</div>
+        </div>
+        <div class="phone-content">
+          <div class="phone-row">
+            <div class="pr-label">Available</div>
+            <div class="pr-val" style="color:#3a8a5a">$1,240</div>
+          </div>
+          <div class="phone-row">
+            <div class="pr-label">Total Debt</div>
+            <div class="pr-val">$12,840</div>
+          </div>
+          <div class="event-card">
+            <div class="ei">🚗</div>
+            <div>
+              <div class="et">Car Broke Down</div>
+              <div style="font-size:9px;color:#999;font-family:'DM Mono',monospace;">Unexpected repair</div>
+            </div>
+            <div class="ea">−$460</div>
+          </div>
+          <div style="font-family:'DM Mono',monospace;font-size:8px;color:#999;display:flex;justify-content:space-between;margin-bottom:4px;">
+            <span>Budget Allocation</span><span style="color:var(--gold)">$485 left</span>
+          </div>
+          <div class="debt-bar-row">
+            <div class="dbr-top"><span>Credit Card · 18% APR</span><span style="color:var(--rust)">$3,210</span></div>
+            <div class="dbr-track"><div class="dbr-fill" style="--w:60%"></div></div>
+          </div>
+          <div class="debt-bar-row">
+            <div class="dbr-top"><span>Student Loan · 6% APR</span><span style="color:var(--rust)">$7,190</span></div>
+            <div class="dbr-track"><div class="dbr-fill" style="--w:78%;animation-delay:1.7s"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ticker-wrap">
+      <div class="ticker-inner">
+        <span class="ticker-item">3 difficulty modes — Easy, Normal, Hard</span>
+        <span class="ticker-item"><span>24% APR</span> on Hard mode — brutal but real</span>
+        <span class="ticker-item"><span>$16,000</span> in debt · 10 months to crush it</span>
+        <span class="ticker-item"><span>Job loss</span> risk in Hard mode</span>
+        <span class="ticker-item"><span>Credit score</span> damage for missed payments</span>
+        <span class="ticker-item">3 difficulty modes — Easy, Normal, Hard</span>
+        <span class="ticker-item"><span>24% APR</span> on Hard mode — brutal but real</span>
+        <span class="ticker-item"><span>$16,000</span> in debt · 10 months to crush it</span>
+        <span class="ticker-item"><span>Job loss</span> risk in Hard mode</span>
+        <span class="ticker-item"><span>Credit score</span> damage for missed payments</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SCENE 3: LIFE EVENTS ═══ -->
+  <div class="scene" id="s3">
+    <div class="s3-header">
+      <div class="tag eyebrow">Life Throws Curveballs</div>
+      <h2 style="margin-top:8px;">15+ Random Events.<br><em>Every game is different.</em></h2>
+    </div>
+    <div class="event-grid">
+      <div class="ev-card bad">
+        <div class="ev-icon">🚗</div>
+        <div class="ev-title">Car Broke Down</div>
+        <div class="ev-impact">−$460 unexpected</div>
+      </div>
+      <div class="ev-card bad">
+        <div class="ev-icon">🏥</div>
+        <div class="ev-title">Medical Bill</div>
+        <div class="ev-impact">−$780 this month</div>
+      </div>
+      <div class="ev-card good">
+        <div class="ev-icon">🎁</div>
+        <div class="ev-title">Surprise Bonus</div>
+        <div class="ev-impact">+$600 windfall</div>
+      </div>
+      <div class="ev-card bad">
+        <div class="ev-icon">💼</div>
+        <div class="ev-title">Job Loss Risk</div>
+        <div class="ev-impact">Hard mode only</div>
+      </div>
+      <div class="ev-card good">
+        <div class="ev-icon">💰</div>
+        <div class="ev-title">Tax Refund</div>
+        <div class="ev-impact">+$940 income</div>
+      </div>
+      <div class="ev-card bad">
+        <div class="ev-icon">📉</div>
+        <div class="ev-title">Credit Hit</div>
+        <div class="ev-impact">Missed payment</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SCENE 4: STRATEGY ═══ -->
+  <div class="scene" id="s4">
+    <div class="s4-bg"></div>
+    <div class="s4-left">
+      <div class="s4-eyebrow">Strategy Matters</div>
+      <h2>How you pay<br>changes <em>everything.</em></h2>
+      <p class="s4-desc">Avalanche, snowball, or minimums only — each approach has a real cost. The numbers don't lie.</p>
+    </div>
+    <div class="strategy-cards">
+      <div class="strat-card winner">
+        <div class="strat-icon">❄️</div>
+        <div>
+          <div class="sc-label">Avalanche Method</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.4);font-family:'DM Mono',monospace;margin-top:1px;">Highest APR first</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
+          <span class="badge">OPTIMAL</span>
+          <span class="sc-val">Saves most $</span>
+        </div>
+      </div>
+      <div class="strat-card">
+        <div class="strat-icon">⛄</div>
+        <div>
+          <div class="sc-label">Snowball Method</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.4);font-family:'DM Mono',monospace;margin-top:1px;">Smallest balance first</div>
+        </div>
+        <span class="sc-val">Psychological wins</span>
+      </div>
+      <div class="strat-card">
+        <div class="strat-icon">🐢</div>
+        <div>
+          <div class="sc-label">Minimums Only</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.4);font-family:'DM Mono',monospace;margin-top:1px;">Pay the floor</div>
+        </div>
+        <span class="sc-val" style="color:var(--red)!important">Danger zone</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SCENE 5: DIFFICULTY ═══ -->
+  <div class="scene" id="s5">
+    <div class="s5-header">
+      <div class="tag" style="margin-bottom:8px;">Difficulty Modes</div>
+      <h2>Three modes. <em>One goal.</em></h2>
+      <p>Choose your challenge — Easy eases you in, Hard throws job loss, 70% bad events and 24% APR.</p>
+    </div>
+    <div class="diff-cols">
+      <div class="diff-card easy">
+        <div class="dc-mode">☁️ Easy</div>
+        <div class="dc-name">Learn the Basics</div>
+        <div class="dc-income">$4,200/mo</div>
+        <div class="dc-apr">14% APR</div>
+        <div class="dc-features">
+          <div class="dcf"><div class="dot"></div>Higher monthly income</div>
+          <div class="dcf"><div class="dot"></div>60% good events</div>
+          <div class="dcf"><div class="dot"></div>No job loss risk</div>
+        </div>
+      </div>
+      <div class="diff-card normal" style="position:relative;">
+        <div class="most-real">MOST REALISTIC</div>
+        <div class="dc-mode">⚖️ Normal</div>
+        <div class="dc-name">Real Life</div>
+        <div class="dc-income">$3,500/mo</div>
+        <div class="dc-apr">18% APR</div>
+        <div class="dc-features">
+          <div class="dcf"><div class="dot"></div>Standard income</div>
+          <div class="dcf"><div class="dot"></div>50/50 event mix</div>
+          <div class="dcf"><div class="dot"></div>Rare income drops</div>
+        </div>
+      </div>
+      <div class="diff-card hard">
+        <div class="dc-mode">🔥 Hard</div>
+        <div class="dc-name">Survive or Spiral</div>
+        <div class="dc-income">$2,800/mo</div>
+        <div class="dc-apr">24% APR</div>
+        <div class="dc-features">
+          <div class="dcf"><div class="dot"></div>Reduced income</div>
+          <div class="dcf"><div class="dot"></div>70% bad events</div>
+          <div class="dcf"><div class="dot"></div>Job loss every month</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SCENE 6: DEBT METER ═══ -->
+  <div class="scene" id="s6">
+    <div class="s6-bg"></div>
+    <div class="s6-header">
+      <div class="eyebrow-c">10 Months · One Goal</div>
+      <h2>Watch your debt shrink<br>with every smart decision.</h2>
+      <p>Interest works against you. Strategy works for you.</p>
+    </div>
+    <div class="debt-meter-box">
+      <div class="dmb-top">
+        <div>
+          <div class="dmb-label">Remaining Debt</div>
+          <div class="dmb-amount">$16,000</div>
+        </div>
+        <div class="dmb-month">Month 1</div>
+      </div>
+      <div class="debt-viz">
+        <div class="dv-track">
+          <div class="dv-remaining"></div>
+          <div class="dv-paid"></div>
+        </div>
+      </div>
+      <div class="dv-labels">
+        <span class="dl-left">■ Remaining debt</span>
+        <span class="dl-right">■ Amount paid</span>
+      </div>
+      <div class="month-markers">
+        <div class="mm active"></div>
+        <div class="mm"></div><div class="mm"></div><div class="mm"></div>
+        <div class="mm"></div><div class="mm"></div><div class="mm"></div>
+        <div class="mm"></div><div class="mm"></div><div class="mm"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SCENE 7: CTA ═══ -->
+  <div class="scene" id="s7">
+    <div class="s7-bg"></div>
+    <div class="s7-grid"></div>
+    <div class="center-content">
+      <div class="s7-kicker">Now available in the store</div>
+      <h2>Crush Your<br>Debt.</h2>
+      <p class="s7-sub">10 months. 3 debts. Real financial strategy.</p>
+      <div class="cta-pill">Find DebtCrush in the store</div>
+      <div class="s7-tag">Financial Simulation Game · Easy · Normal · Hard</div>
+    </div>
+    <div class="stamp">Now Available</div>
+  </div>
+
+</div><!-- /stage -->
+
+<script>
+// ── Scene config: [id, duration_ms]
+const SCENES = [
+  ['s1', 2600],
+  ['s2', 3800],
+  ['s3', 3400],
+  ['s4', 3200],
+  ['s5', 3400],
+  ['s6', 3800],
+  ['s7', 4000],
+];
+const TOTAL = SCENES.reduce((a,b) => a + b[1], 0);
+
+let current = -1;
+let timer = null;
+let elapsed = 0;
+let progTimer = null;
+let playing = false;
+
+const playBtn = document.getElementById('play-btn');
+const progressBar = document.getElementById('progress-bar');
+
+function showScene(idx) {
+  // Hide all
+  document.querySelectorAll('.scene').forEach(s => {
+    s.classList.remove('active','fade-in');
+  });
+  if (idx < 0 || idx >= SCENES.length) return;
+  const el = document.getElementById(SCENES[idx][0]);
+  el.classList.add('active', 'fade-in');
+  current = idx;
+}
+
+function runScene(idx) {
+  if (idx >= SCENES.length) {
+    // End — show replay
+    playing = false;
+    clearInterval(progTimer);
+    playBtn.querySelector('span').textContent = 'Replay';
+    playBtn.querySelector('.play-icon').innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z" fill="#f2ebe0"/></svg>`;
+    playBtn.style.display = 'flex';
+    return;
+  }
+  showScene(idx);
+  timer = setTimeout(() => runScene(idx + 1), SCENES[idx][1]);
+}
+
+function startProgress() {
+  elapsed = 0;
+  const step = 80;
+  progTimer = setInterval(() => {
+    elapsed += step;
+    const pct = Math.min(100, (elapsed / TOTAL) * 100);
+    progressBar.style.width = pct + '%';
+    if (elapsed >= TOTAL) clearInterval(progTimer);
+  }, step);
+}
+
+// ── PIANO AUDIO ENGINE (Web Audio API — no external files) ──────────────
+let audioCtx = null;
+let masterGain = null;
+let pianoLoop = null;
+let noteTimeouts = [];
+
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  // Master gain with soft volume
+  masterGain = audioCtx.createGain();
+  masterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+  masterGain.gain.linearRampToValueAtTime(0.38, audioCtx.currentTime + 1.8);
+  masterGain.connect(audioCtx.destination);
+
+  // Soft reverb via convolver
+  const convolver = audioCtx.createConvolver();
+  const revLen = audioCtx.sampleRate * 2.5;
+  const revBuf = audioCtx.createBuffer(2, revLen, audioCtx.sampleRate);
+  for (let ch = 0; ch < 2; ch++) {
+    const d = revBuf.getChannelData(ch);
+    for (let i = 0; i < revLen; i++)
+      d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / revLen, 2.2);
+  }
+  convolver.buffer = revBuf;
+
+  const reverbGain = audioCtx.createGain();
+  reverbGain.gain.value = 0.32;
+
+  masterGain.connect(convolver);
+  convolver.connect(reverbGain);
+  reverbGain.connect(audioCtx.destination);
+}
+
+// Piano note: additive synthesis mimicking a soft upright piano
+function playNote(freq, startTime, duration, velocity = 0.7) {
+  if (!audioCtx) return;
+
+  const env = audioCtx.createGain();
+  env.gain.setValueAtTime(0, startTime);
+  env.gain.linearRampToValueAtTime(velocity * 0.9, startTime + 0.008);
+  env.gain.setTargetAtTime(velocity * 0.55, startTime + 0.012, 0.06);
+  env.gain.setTargetAtTime(0, startTime + duration * 0.55, duration * 0.38);
+  env.connect(masterGain);
+
+  // Harmonics stack (fundamental + overtones with decay weighting)
+  const harmonics = [
+    { mult: 1.0,  gain: 1.00 },
+    { mult: 2.0,  gain: 0.42 },
+    { mult: 3.0,  gain: 0.18 },
+    { mult: 4.0,  gain: 0.09 },
+    { mult: 5.0,  gain: 0.04 },
+  ];
+
+  harmonics.forEach(({ mult, gain: hg }) => {
+    const osc = audioCtx.createOscillator();
+    const hGain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq * mult;
+    hGain.gain.value = hg;
+    // Higher harmonics decay faster (piano character)
+    hGain.gain.setTargetAtTime(0, startTime + 0.015, duration * (0.5 / mult));
+    osc.connect(hGain);
+    hGain.connect(env);
+    osc.start(startTime);
+    osc.stop(startTime + duration + 0.5);
+  });
+
+  // Subtle attack click (hammer noise)
+  const noise = audioCtx.createOscillator();
+  const noiseGain = audioCtx.createGain();
+  noise.type = 'sawtooth';
+  noise.frequency.value = freq * 1.8;
+  noiseGain.gain.setValueAtTime(velocity * 0.08, startTime);
+  noiseGain.gain.linearRampToValueAtTime(0, startTime + 0.018);
+  noise.connect(noiseGain);
+  noiseGain.connect(masterGain);
+  noise.start(startTime);
+  noise.stop(startTime + 0.04);
+}
+
+// Convert MIDI note to Hz
+function midiHz(n) { return 440 * Math.pow(2, (n - 69) / 12); }
+
+// ── Gentle piano composition in C major / A minor
+// Sparse, reflective — fits the "financial journey" mood
+// Format: [midiNote, beatOffset, duration_beats, velocity]
+const BPM = 72;
+const BEAT = 60 / BPM;
+
+const MELODY = [
+  // Bar 1 — gentle opening arpeggio
+  [60, 0,    1.8, 0.55],  // C4
+  [64, 0.5,  1.5, 0.50],  // E4
+  [67, 1.0,  1.5, 0.52],  // G4
+  [72, 1.5,  2.5, 0.60],  // C5
+
+  // Bar 2
+  [71, 4,    1.8, 0.55],  // B4
+  [67, 4.5,  1.5, 0.48],  // G4
+  [65, 5.0,  1.5, 0.50],  // F4
+  [69, 5.5,  2.5, 0.58],  // A4
+
+  // Bar 3 — slight tension
+  [67, 8,    1.8, 0.54],  // G4
+  [64, 8.5,  1.2, 0.48],  // E4
+  [65, 9.2,  1.2, 0.50],  // F4
+  [67, 10,   2.5, 0.56],  // G4
+
+  // Bar 4 — resolve
+  [64, 12,   1.5, 0.55],  // E4
+  [60, 12.5, 1.5, 0.52],  // C4
+  [62, 13.2, 1.2, 0.48],  // D4
+  [60, 14,   3.5, 0.62],  // C4 (long resolve)
+
+  // Bar 5 — higher register, lighter
+  [76, 16,   1.8, 0.50],  // E5
+  [74, 16.6, 1.4, 0.45],  // D5
+  [72, 17.2, 1.4, 0.48],  // C5
+  [71, 18,   2.8, 0.54],  // B4
+
+  // Bar 6
+  [69, 20,   1.5, 0.50],  // A4
+  [67, 20.5, 1.2, 0.45],  // G4
+  [65, 21.2, 1.2, 0.48],  // F4
+  [64, 22,   3.0, 0.56],  // E4
+
+  // Bar 7 — gentle swell
+  [60, 24,   1.5, 0.55],  // C4
+  [64, 24.5, 1.2, 0.52],  // E4
+  [67, 25.2, 1.5, 0.54],  // G4
+  [72, 26,   1.8, 0.60],  // C5
+  [74, 27,   2.5, 0.58],  // D5
+
+  // Bar 8 — return home
+  [72, 30,   1.5, 0.55],  // C5
+  [69, 30.5, 1.2, 0.50],  // A4
+  [67, 31.2, 1.5, 0.52],  // G4
+  [64, 32,   4.0, 0.58],  // E4 (fade)
+];
+
+// Left-hand bass accompaniment — soft whole/half notes
+const BASS = [
+  [48, 0,   3.5, 0.35],   // C3
+  [52, 4,   3.5, 0.33],   // E3
+  [55, 8,   3.5, 0.34],   // G3
+  [48, 12,  3.5, 0.36],   // C3
+  [45, 16,  3.5, 0.32],   // A2
+  [53, 20,  3.5, 0.33],   // F3
+  [43, 24,  3.5, 0.34],   // G2
+  [48, 28,  7.0, 0.34],   // C3 (long ending)
+  // repeat for loop
+  [48, 36,  3.5, 0.32],
+  [52, 40,  3.5, 0.30],
+  [55, 44,  3.5, 0.32],
+  [48, 48,  3.5, 0.33],
+  [45, 52,  3.5, 0.30],
+  [53, 56,  3.5, 0.32],
+  [43, 60,  3.5, 0.32],
+  [48, 64,  7.0, 0.32],
+];
+
+const TOTAL_BEATS = 36; // loop length in beats
+
+function schedulePiano(startAudioTime) {
+  const allNotes = [...MELODY, ...BASS];
+  allNotes.forEach(([midi, beat, dur, vel]) => {
+    // Play two loops to cover the ~25s clip
+    [0, TOTAL_BEATS].forEach(loopOffset => {
+      const t = startAudioTime + (beat + loopOffset) * BEAT;
+      playNote(midiHz(midi), t, dur * BEAT, vel);
+    });
+  });
+}
+
+function fadePianoOut(fadeDuration = 4.0) {
+  if (!masterGain || !audioCtx) return;
+  const now = audioCtx.currentTime;
+  // Cancel any existing ramps, hold current level, then linear ramp to silence
+  const currentVol = masterGain.gain.value;
+  masterGain.gain.cancelScheduledValues(now);
+  masterGain.gain.setValueAtTime(currentVol, now);
+  masterGain.gain.linearRampToValueAtTime(0, now + fadeDuration);
+}
+
+// ── HOOK INTO PLAY BUTTON ────────────────────────────────────────────────
+playBtn.addEventListener('click', () => {
+  if (playing) return;
+  playing = true;
+  playBtn.style.display = 'none';
+  progressBar.style.width = '0%';
+  if (timer) clearTimeout(timer);
+  if (progTimer) clearInterval(progTimer);
+
+  // Start audio
+  initAudio();
+  schedulePiano(audioCtx.currentTime + 0.1);
+
+  // Show mute button
+  const muteBtn = document.getElementById('mute-btn');
+  muteBtn.style.display = 'flex';
+  let muted = false;
+  muteBtn.addEventListener('click', () => {
+    muted = !muted;
+    if (muted) {
+      masterGain.gain.cancelScheduledValues(audioCtx.currentTime);
+      masterGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.3);
+      document.getElementById('icon-sound').style.display = 'none';
+      document.getElementById('icon-muted').style.display = 'block';
+      document.getElementById('mute-label').textContent = 'Muted';
+    } else {
+      masterGain.gain.cancelScheduledValues(audioCtx.currentTime);
+      masterGain.gain.setTargetAtTime(0.38, audioCtx.currentTime, 0.3);
+      document.getElementById('icon-sound').style.display = 'block';
+      document.getElementById('icon-muted').style.display = 'none';
+      document.getElementById('mute-label').textContent = 'Music';
+    }
+  });
+
+  // Begin a smooth 4-second fade starting 4s before the clip ends
+  const FADE_DURATION = 4000; // ms
+  const fadeStartDelay = Math.max(0, TOTAL - FADE_DURATION);
+  setTimeout(() => fadePianoOut(FADE_DURATION / 1000), fadeStartDelay);
+
+  startProgress();
+  runScene(0);
+});
+</script>
+</body>
+</html>
